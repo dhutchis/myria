@@ -1,9 +1,21 @@
 package edu.washington.escience.myria.daemon;
 
-import edu.washington.escience.myria.MyriaConstants;
-import edu.washington.escience.myria.coordinator.ConfigFileException;
-import edu.washington.escience.myria.tools.MyriaConfigurationParser;
-import edu.washington.escience.myria.tools.MyriaGlobalConfigurationModule;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.GuardedBy;
+import javax.inject.Inject;
+
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.reef.client.ClientConfiguration;
@@ -34,20 +46,10 @@ import org.apache.reef.wake.remote.address.LocalAddressProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.GuardedBy;
-import javax.inject.Inject;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import edu.washington.escience.myria.MyriaConstants;
+import edu.washington.escience.myria.coordinator.ConfigFileException;
+import edu.washington.escience.myria.tools.MyriaConfigurationParser;
+import edu.washington.escience.myria.tools.MyriaGlobalConfigurationModule;
 
 @Unit
 public final class MyriaDriverLauncher {
