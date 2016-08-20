@@ -62,7 +62,7 @@ public final class MyriaDriverLauncher {
    */
   public static void main(final String[] args) throws Exception {
     LauncherStatus run = run(args);
-    LOGGER.info("Exit with status "+run);
+    LOGGER.info("Exit with status " + run);
   }
 
   private final REEF reef;
@@ -135,7 +135,9 @@ public final class MyriaDriverLauncher {
             .set(DriverConfiguration.ON_CLIENT_CLOSED, MyriaDriver.ClientCloseHandler.class);
 
     if (driverJobSubmissionDirectory != null) {
-      driverConf = driverConf.set(DriverConfiguration.DRIVER_JOB_SUBMISSION_DIRECTORY, driverJobSubmissionDirectory);
+      driverConf =
+          driverConf.set(
+              DriverConfiguration.DRIVER_JOB_SUBMISSION_DIRECTORY, driverJobSubmissionDirectory);
     }
     for (String dirPath : libPaths) {
       for (String filePath : getFileNamesInDirectory(Paths.get(dirPath))) {
@@ -209,7 +211,6 @@ public final class MyriaDriverLauncher {
     return driverMemoryMB;
   }
 
-
   /**
    * Prints the expected configuration, compared to the actual configuration given.
    * Used for logging command line arguments.
@@ -239,36 +240,28 @@ public final class MyriaDriverLauncher {
             sss[i1] = default_classes[i1].getSimpleName();
           }
           defaultVal = Arrays.toString(sss);
-        } else
-          defaultVal = "";
+        } else defaultVal = "";
       }
 
       if (i > 0) sb.append('\n');
       sb.append(simpleName);
-      if (!shortName.isEmpty())
-        sb.append(" [-").append(shortName).append("]");
+      if (!shortName.isEmpty()) sb.append(" [-").append(shortName).append("]");
 
-//      sb.append(" (").append(expectedParameter.getSimpleArgName()).append("): ")
+      //      sb.append(" (").append(expectedParameter.getSimpleArgName()).append("): ")
       sb.append(": ").append(doc).append("\n -> ");
 
       boolean ok;
       try {
-        if ((ok = inj.isParameterSet(fullName)))
-          sb.append(inj.getInstance(fullName).toString());
+        if ((ok = inj.isParameterSet(fullName))) sb.append(inj.getInstance(fullName).toString());
       } catch (InjectionException e) {
         ok = false;
       }
       if (!ok)
-        if (!defaultVal.isEmpty())
-          sb.append("[cannot parse; using default] ").append(defaultVal);
-        else
-          sb.append("[cannot parse; no default]");
+        if (!defaultVal.isEmpty()) sb.append("[cannot parse; using default] ").append(defaultVal);
+        else sb.append("[cannot parse; no default]");
     }
     LOGGER.info(sb.toString());
   }
-
-
-
 
   /**
    * Launch the Myria driver.
@@ -291,39 +284,48 @@ public final class MyriaDriverLauncher {
           NoSuchFieldException, SecurityException {
     final Tang tang = Tang.Factory.getTang();
     try {
-      final Class<? extends Name<?>>[] commandLineClasses = new Class[] {
-          RuntimeClassName.class, DriverJobSubmissionDirectory.class, ConfigPath.class, JavaLibPath.class, NativeLibPath.class
-      };
-    final Configuration commandLineConf = CommandLine.parseToConfiguration(args, commandLineClasses);
-    final Injector commandLineInjector = tang.newInjector(commandLineConf);
+      final Class<? extends Name<?>>[] commandLineClasses =
+          new Class[] {
+            RuntimeClassName.class,
+            DriverJobSubmissionDirectory.class,
+            ConfigPath.class,
+            JavaLibPath.class,
+            NativeLibPath.class
+          };
+      final Configuration commandLineConf =
+          CommandLine.parseToConfiguration(args, commandLineClasses);
+      final Injector commandLineInjector = tang.newInjector(commandLineConf);
       logStartupMessage(commandLineClasses, commandLineInjector);
-    final String runtimeClassName = commandLineInjector.getNamedInstance(RuntimeClassName.class);
-    final String driverJobSubmissionDirectory = commandLineInjector.isParameterSet(DriverJobSubmissionDirectory.class) ? commandLineInjector.getNamedInstance(DriverJobSubmissionDirectory.class) : null;
-    final String configPath = commandLineInjector.getNamedInstance(ConfigPath.class);
-    final String javaLibPath = commandLineInjector.getNamedInstance(JavaLibPath.class);
-    final String nativeLibPath = commandLineInjector.getNamedInstance(NativeLibPath.class);
+      final String runtimeClassName = commandLineInjector.getNamedInstance(RuntimeClassName.class);
+      final String driverJobSubmissionDirectory =
+          commandLineInjector.isParameterSet(DriverJobSubmissionDirectory.class)
+              ? commandLineInjector.getNamedInstance(DriverJobSubmissionDirectory.class)
+              : null;
+      final String configPath = commandLineInjector.getNamedInstance(ConfigPath.class);
+      final String javaLibPath = commandLineInjector.getNamedInstance(JavaLibPath.class);
+      final String nativeLibPath = commandLineInjector.getNamedInstance(NativeLibPath.class);
 
-    final Configuration globalConf = getMyriaGlobalConf(configPath);
-    final String serializedGlobalConf = new AvroConfigurationSerializer().toString(globalConf);
-    final Configuration globalConfWrapper =
-        tang.newConfigurationBuilder()
-            .bindNamedParameter(SerializedGlobalConf.class, serializedGlobalConf)
-            .build();
-    String driverHostName = getMasterHost(globalConf);
-    int driverMemoryMB = getDriverMemory(globalConf);
-    final Configuration driverConf =
-        Configurations.merge(
-            getDriverConf(
-                driverJobSubmissionDirectory,
-                driverHostName,
-                driverMemoryMB,
-                new String[] {javaLibPath},
-                new String[] {nativeLibPath}),
-            globalConfWrapper);
+      final Configuration globalConf = getMyriaGlobalConf(configPath);
+      final String serializedGlobalConf = new AvroConfigurationSerializer().toString(globalConf);
+      final Configuration globalConfWrapper =
+          tang.newConfigurationBuilder()
+              .bindNamedParameter(SerializedGlobalConf.class, serializedGlobalConf)
+              .build();
+      String driverHostName = getMasterHost(globalConf);
+      int driverMemoryMB = getDriverMemory(globalConf);
+      final Configuration driverConf =
+          Configurations.merge(
+              getDriverConf(
+                  driverJobSubmissionDirectory,
+                  driverHostName,
+                  driverMemoryMB,
+                  new String[] {javaLibPath},
+                  new String[] {nativeLibPath}),
+              globalConfWrapper);
 
-    return tang.newInjector(getRuntimeConf(runtimeClassName), getClientConf())
-        .getInstance(MyriaDriverLauncher.class)
-        .run(driverConf);
+      return tang.newInjector(getRuntimeConf(runtimeClassName), getClientConf())
+          .getInstance(MyriaDriverLauncher.class)
+          .run(driverConf);
     } catch (ParseException | InjectionException e) {
       LOGGER.error("Problem with command line options", e);
       return LauncherStatus.FAILED;
@@ -383,7 +385,8 @@ public final class MyriaDriverLauncher {
    * Command line parameter: runtime configuration class to use (defaults to local runtime).
    */
   @NamedParameter(
-    doc = "Full path of driver job submission directory; must be visible to the driver launcher and the driver",
+    doc =
+        "Full path of driver job submission directory; must be visible to the driver launcher and the driver",
     short_name = "driverDir"
   )
   public static final class DriverJobSubmissionDirectory implements Name<String> {}
